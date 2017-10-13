@@ -1,18 +1,18 @@
 {
   "name": "arva-js",
   "version": "1.2.1",
-  "description": "Using the latest ES6 standards creating a simple, compact MVC for Famous applications.",
+  "description": "Arva Foundation is the core of the Arva User Experience Platform where developers have complete freedom to hack their creations. Built to be a complete substitute for frameworks like React and Angular, Arva plays well with others by emphasising on ECMAScript syntax and aiming for compatability with the W3C Components specification.",
   "main": "src/main.js",
   "homepage": "http://arva.io",
   "repository": {
     "type": "git",
-    "url": "git://github.com/bizboard/arva-js.git"
+    "url": "git://github.com/Arva/arva-js.git"
   },
   "scripts": {
     "test": "mocha --compilers js:babel/register --recursive --timeout 15000"
   },
   "bugs": {
-    "url": "https://github.com/bizboard/arva-js/issues"
+    "url": "https://github.com/Arva/arva-js/issues"
   },
   "jspm": {
     "directories": {
@@ -43,7 +43,7 @@
       "traceur-runtime": "github:jmcriffey/bower-traceur-runtime@0.0.90"
     }
   },
-  "author": "Tom Clement <tom@bizboard.nl>, Hans van den Akker <hans@bizboard.nl>",
+  "author": "Karl Lundfall <karl@bizboard.nl>, Hans van den Akker <hans@bizboard.nl>",
   "license": "NPOSL-3.0",
   "devDependencies": {
     "babel": "^5.8.23",
