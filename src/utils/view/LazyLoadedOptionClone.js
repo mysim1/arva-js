@@ -41,7 +41,7 @@ export class LazyLoadedOptionClone {
                     return cachedShallowClone[property] = LazyLoadedOptionClone.get(TargetObjectType,
                         optionToClone.shadow[property],
                         /* Access the listener tree by using dedicated method to be sure that it's done correctly */
-                        optionObserver.accessObjectPath(listenerTree, [property], true),
+                        listenerTree[property],
                         nestedPropertyPath.concat(property),
                         optionObserver,
                         optionToClone)
