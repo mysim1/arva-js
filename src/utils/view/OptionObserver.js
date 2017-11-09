@@ -958,7 +958,8 @@ export class OptionObserver extends EventEmitter {
         if (onChangeFunction !== notFound) {
             onChangeFunction(newValue)
         } else if (newValue instanceof InputOption) {
-            this._accommodateInsideObject(newValueParent, [onOptionChange, propertyName], (newValue) => newValue[changeValue]);
+            let inputOptionObject = newValue;
+            this._accommodateInsideObject(newValueParent, [onOptionChange, propertyName], (innerValue) => inputOptionObject[changeValue](innerValue));
             newValue = newValue[unwrapValue]();
         }
 
