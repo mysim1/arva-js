@@ -14,7 +14,7 @@ import {Utils} from './Utils.js';
 import {ArrayObserver} from './ArrayObserver.js';
 import {
     InputOption, unwrapValue,
-    changeValue
+    changeValue, storedInputOption
 } from './InputOption';
 import {ObjectHelper} from '../ObjectHelper';
 import {PrioritisedObject} from '../../data/PrioritisedObject';
@@ -158,23 +158,6 @@ export class OptionObserver extends EventEmitter {
             return this._throwError(`Internal error in OptionObserver: preprocess function with index ${index} doesn't exist`)
         }
 
-        //todo: Does this work for arrays completely? defaultOptions will only contain shallow arrays
-        this._deepTraverse(this.defaultOptions, (nestedPropertyPath, defaultOptionParent, defaultOption, propertyName, [incomingOptionParent]) => {
-            let incomingOption = incomingOptionParent[propertyName];
-            let propertyDescriptor = Object.getOwnPropertyDescriptor(incomingOptionParent, propertyName);
-            if (this._isMyOption(incomingOption) &&
-                propertyDescriptor.get &&
-                propertyDescriptor.get() === incomingOption
-            ) {
-                return true
-            }
-            this._setupOptionLink(incomingOptionParent, propertyName, incomingOption, nestedPropertyPath);
-            /* Unspecified option, bailing out */
-            if (!defaultOption) {
-                return true
-            }
-            return false
-        }, [incomingOptions]);
         this._recordForPreprocessing(() =>
             this._preprocessMethods[index](this), index);
         /* Prevent the preprocess from being triggered within the next flush. This is important
@@ -252,6 +235,7 @@ export class OptionObserver extends EventEmitter {
         }
         return object
     }
+
 
     /**
      * Gets the entry names that are there for a certain listener tree
@@ -448,17 +432,17 @@ export class OptionObserver extends EventEmitter {
         this._copyImportantSymbols(newOptions, this.options);
 
         /* Flush the updates in order to trigger the updates immediately */
-        this._flushUpdates()
+        this.flushUpdates()
     }
 
 
     _markAllOptionsAsUpdated() {
         let rootProperties = Object.keys(this.defaultOptions);
         this._updateOptionsStructure(rootProperties, this.options, [], rootProperties.map((rootProperty) => undefined));
-        this._flushUpdates()
+        this.flushUpdates()
     }
 
-    _setupOptionLink(object, key, newValue, nestedPropertyPath) {
+    _setupOptionLink(object, key, newValue, nestedPropertyPath, listenerTree) {
 
         if (this._isMyOption(newValue)) {
             /* Shallow clone at this level, which will become a deep clone when we're finished traversing */
@@ -466,7 +450,7 @@ export class OptionObserver extends EventEmitter {
         }
 
         /* Only add the getter/setter hook if there isn't one yet */
-        this._addGetterSetterHook(object, key, newValue, nestedPropertyPath);
+        this._addGetterSetterHook(object, key, newValue, nestedPropertyPath, listenerTree);
         //TODO there might be more optimal ways of doing this, the option will be marked 4-5 times on setup
         this._markAsOption(object);
         this._markAsOption(newValue);
@@ -492,14 +476,15 @@ export class OptionObserver extends EventEmitter {
      * @param key
      * @param value
      * @param {Array} nestedPropertyPath
+     * @param {Object} listenerTree
      * @private
      */
-    _addGetterSetterHook(object, key, value, nestedPropertyPath) {
+    _addGetterSetterHook(object, key, value, nestedPropertyPath, listenerTree) {
         ObjectHelper.addGetSetPropertyWithShadow(object, key, value, true, true,
             (info) =>
-                this._onEventTriggered({...info, type: 'setter', parentObject: object, nestedPropertyPath})
+                this._onEventTriggered({...info, type: 'setter', parentObject: object, nestedPropertyPath, listenerTree})
             , (info) =>
-                this._onEventTriggered({...info, type: 'getter', parentObject: object, nestedPropertyPath}))
+                this._onEventTriggered({...info, type: 'getter', parentObject: object, nestedPropertyPath, listenerTree}))
     }
 
     /**
@@ -545,6 +530,10 @@ export class OptionObserver extends EventEmitter {
                 this._updateOptionsStructure([propertyName], parentObject, nestedPropertyPath, [oldValue]);
             }
             this._ignoreListeners = false;
+        } else if (info.type === 'getter' && info.listenerTree[storedInputOption]){
+            for(let inputOption of info.listenerTree[storedInputOption]){
+                inputOption.updateValueIfNecessary();
+            }
         }
     }
 
@@ -562,7 +551,7 @@ export class OptionObserver extends EventEmitter {
         }
     }
 
-    _flushUpdates() {
+    flushUpdates() {
 
         /* Do a traverse only for the leafs of the new updates, to avoid doing extra work */
         this._deepTraverseWithShallowArrays(this._newOptionUpdates, (nestedPropertyPath, updateObjectParent, updateObject, propertyName, [defaultOptionParent, listenerTree, optionObject]) => {
@@ -574,6 +563,7 @@ export class OptionObserver extends EventEmitter {
         this._flushArrayObserverChanges();
         this._newOptionUpdates = {};
         this._handleResultingUpdates();
+        this.emit('postFlush');
     }
 
     /**
@@ -607,6 +597,7 @@ export class OptionObserver extends EventEmitter {
                 [newChanges]: value,
                 [originalValue]: oldValue
             }
+            this.emit('propertyUpdated', {nestedPropertyPath, propertyName, value, oldValue});
         }
     }
 
@@ -890,7 +881,7 @@ export class OptionObserver extends EventEmitter {
             }
             delete this._updatesForNextTick[OptionObserver.preprocess];
             /* Reflush to take the changes made by the preprocessing into account */
-            this._flushUpdates();
+            this.flushUpdates();
         }
 
         /* Currently, all renderables are "one dimensional", they only have one name. That is why this is just a simple
@@ -953,14 +944,16 @@ export class OptionObserver extends EventEmitter {
             }
         }
 
-        let onChangeFunction = this.accessObjectPath(newValueParent, [onOptionChange, propertyName]);
 
-        if (onChangeFunction !== notFound) {
+        let onChangeFunction = listenerTree[onOptionChange];
+
+        if (onChangeFunction !== undefined) {
             onChangeFunction(newValue)
         } else if (newValue instanceof InputOption) {
             let inputOptionObject = newValue;
-            this._accommodateInsideObject(newValueParent, [onOptionChange, propertyName], (innerValue) => inputOptionObject[changeValue](innerValue));
-            newValue = newValue[unwrapValue]();
+            onChangeFunction = (innerValue) => inputOptionObject[changeValue](innerValue);
+            listenerTree[onOptionChange] = onChangeFunction;
+            newValue = inputOptionObject[unwrapValue](this, nestedPropertyPath.concat(propertyName));
         }
 
         if (valueIsModelProperty) {
@@ -988,7 +981,7 @@ export class OptionObserver extends EventEmitter {
         }
 
         if (valueToLinkTo !== undefined) {
-            this._setupOptionLink(newValueParent, propertyName, valueToLinkTo, nestedPropertyPath)
+            this._setupOptionLink(newValueParent, propertyName, valueToLinkTo, nestedPropertyPath, listenerTree);
         }
 
         //TODO clean up code if needed (why is it even needed?)
@@ -1223,14 +1216,14 @@ export class OptionObserver extends EventEmitter {
         /* Reset dirty instances, because we are going to traverse all instances anyways */
         OptionObserver._dirtyInstances = {};
         for (let optionObserver of OptionObserver._instances) {
-            optionObserver._flushUpdates()
+            optionObserver.flushUpdates()
         }
         /* Flush dirty instances until there are no more dirty instances left */
         while (Object.keys(OptionObserver._dirtyInstances).length) {
             let dirtyInstances = {...OptionObserver._dirtyInstances};
             OptionObserver._dirtyInstances = {};
             for (let optionObserverID in dirtyInstances) {
-                dirtyInstances[optionObserverID]._flushUpdates()
+                dirtyInstances[optionObserverID].flushUpdates()
             }
         }
         this._isFlushingUpdates = false;

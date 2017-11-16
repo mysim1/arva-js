@@ -1,25 +1,30 @@
 import {notFound, OptionObserver, listeners} from './OptionObserver';
 
 export let changeValue = Symbol('changeValue'),
-    unwrapValue = Symbol('unwrapValue');
+    unwrapValue = Symbol('unwrapValue'),
+    storedInputOption = Symbol('storedInputOption');
 
 /* Every property has to be represented by Symbols in order to avoid any collisions with option names */
 let nestedPropertyPath = Symbol('nestedPropertyPath'),
     optionParentObject = Symbol('optionParentObject'),
+    foreignNestedPropertyPath = Symbol('foreignNestedPropertyPath'),
     propertyName = Symbol('propertyName'),
     optionObject = Symbol('optionObject'),
     optionObserver = Symbol('optionObserver'),
+    /* This is the option observer that consumes the input option */
+    foreignOptionObserver = Symbol('optionObserver'),
     listenerTree = Symbol('listenerTree');
 
 /**
  * Represents an option where data flows upwards
  */
 export class InputOption {
-    constructor(incomingNestedPropertyPath, incomingOptionObject, incomingOptionParentObject, incomingOptionObserver, incomingListenerTree) {
+    constructor(incomingNestedPropertyPath, incomingOptionObserver, incomingListenerTree) {
         this[nestedPropertyPath] = incomingNestedPropertyPath.slice(0, -1);
         this[optionObserver] = incomingOptionObserver;
         this[propertyName] = incomingNestedPropertyPath[incomingNestedPropertyPath.length - 1];
         this[listenerTree] = incomingListenerTree;
+
     }
 
     [changeValue] = (newValue) => {
@@ -41,7 +46,14 @@ export class InputOption {
         }
     };
 
-    [unwrapValue] = () => {
+    [unwrapValue] = (theForeignOptionObserver, theForeignNestedPropertyPath) => {
+        //TODO This function is getting a little bit too long
+        let storedInputOptions = this[listenerTree][storedInputOption];
+        if(!storedInputOptions){
+            storedInputOptions = this[listenerTree][storedInputOption] = [];
+        }
+        storedInputOptions.push(this);
+        this[foreignNestedPropertyPath] = theForeignNestedPropertyPath;
         let storedOptionsObserver = this[optionObserver];
         //TODO When unwrapValue is called for the second time, this._shouldMuteUpdatesWhenChanging will always go to false
         //There should be another solution, but not sure how to implement it
@@ -73,10 +85,33 @@ export class InputOption {
                 listenerForRecordAlreadyDefined = true;
             }
         } while (activeRecordings);
-
+        if(theForeignOptionObserver && theForeignOptionObserver !== this[foreignOptionObserver]){
+            this._setupForeignOptionObserverListener(theForeignOptionObserver)
+        }
         this._shouldMuteUpdatesWhenChanging = !listenerForRecordAlreadyDefined;
 
         return storedOptionsObserver.accessObjectPath(this[optionObserver].getOptions(), this[nestedPropertyPath].concat(this[propertyName]));
+    };
+
+    updateValueIfNecessary(){
+        if(this._valueShouldBeInvalidated){
+            this[foreignOptionObserver].flushUpdates();
+        }
     }
 
+    _setupForeignOptionObserverListener(theForeignOptionObserver) {
+        this[foreignOptionObserver] = theForeignOptionObserver;
+        theForeignOptionObserver.on('propertyUpdated', ({nestedPropertyPath: nestedPathOfUpdate, propertyName, value, oldValue})=> {
+            /* Check if the updated property is a subset of the own nested property */
+            for(let [index, intermediatePropertyName] of nestedPathOfUpdate.concat(propertyName).entries()){
+                if(intermediatePropertyName !== this[foreignNestedPropertyPath][index]){
+                    return;
+                }
+            }
+            this._valueShouldBeInvalidated = true;
+            theForeignOptionObserver.once('postFlush', () =>{
+                this._valueShouldBeInvalidated = false;
+            });
+        })
+    }
 }

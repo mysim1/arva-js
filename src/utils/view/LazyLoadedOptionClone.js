@@ -13,8 +13,8 @@ let deleted = Symbol('deleted');
  */
 export class LazyLoadedOptionClone {
 
-    static get(TargetObjectType, optionToClone, listenerTree, nestedPropertyPath = [], optionObserver, optionToCloneParent = null) {
-        let root = new TargetObjectType(nestedPropertyPath, optionToClone, optionToCloneParent, optionObserver, listenerTree);
+    static get(TargetObjectType, optionToClone, listenerTree, nestedPropertyPath = [], optionObserver) {
+        let root = new TargetObjectType(nestedPropertyPath, optionObserver, listenerTree);
         let optionIsArray = Array.isArray(optionToClone);
         if (!Utils.isPlainObject(optionToClone) && !optionIsArray) {
             return root;
@@ -43,8 +43,7 @@ export class LazyLoadedOptionClone {
                         /* Access the listener tree by using dedicated method to be sure that it's done correctly */
                         listenerTree[property],
                         nestedPropertyPath.concat(property),
-                        optionObserver,
-                        optionToClone)
+                        optionObserver)
                 }
             });
         };

@@ -39,16 +39,6 @@ export const bindings = {
       prepPrototypeDecorations(target.prototype).defaultOptions = defaultOptions
     }
   },
-
-  onChange: (transformFunction) => {
-    return (optionsPassed, optionNameToBind) => {
-      let optionChangeListeners = optionsPassed[onOptionChange];
-      if (!optionChangeListeners) {
-        optionChangeListeners = optionsPassed[onOptionChange] = {}
-      }
-      optionChangeListeners[optionNameToBind] = transformFunction
-    }
-  },
   /**
    * Defines a preprocess function to use before the options are assigned. This can be used to simplify the
    * flow of your app. The preprocess function should modify the contents of the options passed.

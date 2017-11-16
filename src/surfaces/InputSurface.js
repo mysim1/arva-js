@@ -74,6 +74,8 @@ export class InputSurface extends FamousInputSurface {
         let result = super.setValue(...arguments);
         if (emitEvent) {
             this._onNewValue(value);
+        } else {
+            this._notifyListenersIfApplicable();
         }
         return result;
     }
@@ -114,9 +116,13 @@ export class InputSurface extends FamousInputSurface {
         }
         this.emit('valueChange', currentValue);
 
+        this._notifyListenersIfApplicable();
+    }
+
+    _notifyListenersIfApplicable() {
         let optionChangeListeners = this.options[onOptionChange];
         if (optionChangeListeners && optionChangeListeners.value) {
-            optionChangeListeners.value(currentValue);
+            optionChangeListeners.value(this._value);
         }
     }
 }
