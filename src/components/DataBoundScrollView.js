@@ -401,7 +401,7 @@ export class DataBoundScrollView extends ReflowingScrollView {
     _constructRenderableFromFunction(callbackToCreate) {
         let newItem = callbackToCreate();
         if (newItem instanceof RenderablePrototype) {
-            newItem = new newItem.type(newItem.options);
+            newItem = new newItem.type(newItem.options, newItem.children);
         }
         return newItem;
     }

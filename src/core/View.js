@@ -61,8 +61,9 @@ export class View extends FamousView {
      * @param {Object} options. The options passed to the view will be stored in this.options, but won't change any
      * behaviour of the core functionality of the view. Instead, configuration of the View is done by decorators.
      *
+     * @param children
      */
-    constructor(options = {}) {
+    constructor(options = {}, children) {
 
         super(options);
 
@@ -79,7 +80,7 @@ export class View extends FamousView {
 
         this._createLayoutController();
         this._initTrueSizedBookkeeping();
-        this._setupExtraRenderables();
+        this._setupExtraRenderables(children);
 
     }
 
@@ -364,8 +365,8 @@ export class View extends FamousView {
      * @param options
      * @returns {RenderablePrototype}
      */
-    static with(options) {
-        return new RenderablePrototype(this, options);
+    static with(options, children) {
+        return new RenderablePrototype(this, options, children);
     }
 
     /**
@@ -810,6 +811,10 @@ export class View extends FamousView {
         this._setupExtraRenderables();
     }
 
+    setNewChildren(children){
+        this._setupExtraRenderables(children);
+    }
+
     _doTrueSizedSurfacesBookkeeping() {
         this._nodes._trueSizeRequested = false
     }
@@ -1063,9 +1068,12 @@ export class View extends FamousView {
         }
         let renderablePrototype = newRenderable instanceof RenderablePrototype && newRenderable;
         if (renderablePrototype) {
-            let {options, type} = renderablePrototype;
+            let {options, type, children} = renderablePrototype;
             if (oldRenderable && oldRenderable.constructor === type && oldRenderable.setNewOptions) {
                 oldRenderable.setNewOptions(options);
+                if(children){
+                    oldRenderable.setNewChildren(children);
+                }
                 newRenderable = oldRenderable;
                 this._renderableHelper.decorateRenderable(
                     Utils.getRenderableID(newRenderable),
@@ -1075,7 +1083,7 @@ export class View extends FamousView {
                 return newRenderable
             }
             /* If there wasn't any function to adjust the options, we have to start over from scratch! */
-            newRenderable = new type(options);
+            newRenderable = new type(options, children);
         }
 
         decorations = this._cloneDecorationsForRenderable(decorations, newRenderable);
@@ -1111,7 +1119,7 @@ export class View extends FamousView {
      */
     _readjustRenderableInitializer(localRenderableName) {
         /* If there is no initializer declared for the renderable, that could mean that the renderable has been
-         * passed "from above" through layout.extra. No action needed */
+         * passed "from above" through the children argument. No action needed */
         if (!this._renderableConstructors[localRenderableName]) {
             return
         }
@@ -1134,8 +1142,7 @@ export class View extends FamousView {
         }
     }
 
-    _setupExtraRenderables() {
-        let extraLayout = this.options[layout.extra] || {};
+    _setupExtraRenderables(extraLayout = {}) {
         if (!extraLayout.renderableConstructors) {
             return;
         }

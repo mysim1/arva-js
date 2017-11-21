@@ -19,7 +19,6 @@ import {  prepDecoratedRenderable,
 prepPrototypeDecorations, decoratorTypes,
 createChainableDecorator}            from './DecoratorHelpers';
 
-let extraLayout = Symbol('extraLayout');
 
 /**
  * Describes a set of decorators used for layouting of a renderable in a View.
@@ -168,23 +167,6 @@ class Layout {
     }, decoratorTypes.childDecorator)
   }
 
-  /**
-   *
-   * @typedef {Object} DockTypes
-   * @property {dockLeft} left Dock to the left
-   * @property {dockRight} right Dock to the right
-   * @property {dockBottom} bottom Dock to the bottom
-   * @property {dockTop} top Dock to the top
-   * @property {fill} fill Fill the rest of the space
-   */
-
-  /**
-   * Extra layout
-   * @type {Symbol}
-   */
-  get extra () {
-    return extraLayout;
-  }
   /**
    * Docks things. See method descriptors for "Dockings"
    * @type {DockTypes}

@@ -19,7 +19,6 @@ import {
 import {ObjectHelper} from '../ObjectHelper';
 import {PrioritisedObject} from '../../data/PrioritisedObject';
 import {Model} from '../../core/Model';
-import {layout} from '../../layout/Decorators';
 import {PrioritisedArray} from '../../data/PrioritisedArray';
 import {LazyLoadedOptionClone} from './LazyLoadedOptionClone';
 
@@ -429,7 +428,6 @@ export class OptionObserver extends EventEmitter {
                 this._markPropertyAsUpdated(nestedPropertyPath, key, newOptionObject[key], existingOptionValue)
             }
         }, [newOptions, this.defaultOptions]);
-        this._copyImportantSymbols(newOptions, this.options);
 
         /* Flush the updates in order to trigger the updates immediately */
         this.flushUpdates()
@@ -597,7 +595,7 @@ export class OptionObserver extends EventEmitter {
             updateObject[propertyName] = {
                 [newChanges]: value,
                 [originalValue]: oldValue
-            }
+            };
             this.emit('propertyUpdated', {nestedPropertyPath, propertyName, value, oldValue});
         }
     }
@@ -1195,16 +1193,6 @@ export class OptionObserver extends EventEmitter {
         }, [innerListenerTree, optionObject[propertyName]], [false, false])
     }
 
-    /**
-     * Copies symbols that aren't enumerable and/or defined (so they won't be copied in the process of flushing updates)
-     *
-     * @param copyFrom
-     * @param copyTo
-     * @private
-     */
-    _copyImportantSymbols(copyFrom, copyTo) {
-        copyTo[layout.extra] = copyFrom[layout.extra]
-    }
 
     static _instances = [];
     static _dirtyInstances = {};
