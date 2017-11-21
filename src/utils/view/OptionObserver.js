@@ -575,6 +575,7 @@ export class OptionObserver extends EventEmitter {
      * @private
      */
     _markPropertyAsUpdated(nestedPropertyPath, propertyName, value, oldValue) {
+
         OptionObserver._markInstanceAsDirty(this);
         /* Mark the object as changes in the most common path */
         let updateObject = this._accommodateObjectPathUnless(this._newOptionUpdates, nestedPropertyPath, (object) =>
@@ -692,6 +693,11 @@ export class OptionObserver extends EventEmitter {
         let onModelChanged = (model, changedProperties) =>
             this._onModelChanged(model, changedProperties, property, nestedPropertyPath);
         let isListening = false;
+        for(let property of Object.keys(model)){
+            if(!localListenerTree[property]){
+                localListenerTree[property] = {[listeners]: {}};
+            }
+        }
         return this._accommodateObjectPath(this._modelListeners, [model.constructor.name])[model.id] = {
             startListening: () => {
                 if (!isListening) {
@@ -946,10 +952,11 @@ export class OptionObserver extends EventEmitter {
 
 
         let onChangeFunction = listenerTree[onOptionChange];
+        let newValueIsInputOption = newValue instanceof InputOption;
 
-        if (onChangeFunction !== undefined) {
+        if (onChangeFunction !== undefined && !newValueIsInputOption) {
             onChangeFunction(newValue)
-        } else if (newValue instanceof InputOption) {
+        } else if (newValueIsInputOption) {
             let inputOptionObject = newValue;
             onChangeFunction = (innerValue) => inputOptionObject[changeValue](innerValue);
             listenerTree[onOptionChange] = onChangeFunction;
@@ -969,6 +976,9 @@ export class OptionObserver extends EventEmitter {
          * TODO: Come up with a more robust solution for default options of arrays */
         if (newValue === undefined && (!parentIsArray || newValueParent.length === 0)) {
             newValue = defaultOption;
+            if(onChangeFunction){
+                onChangeFunction(newValue);
+            }
             if (Utils.isPlainObject(newValue)) {
                 valueToLinkTo = {};
                 this._markAsOption(valueToLinkTo);
@@ -1134,14 +1144,12 @@ export class OptionObserver extends EventEmitter {
             let modelListenerOfType = this._modelListeners[model.constructor.name] || {};
             let modelListener = modelListenerOfType[model.id];
             if (!modelListenerOfType || !modelListener) {
+                //TODO, instead of throwing an error, accommodate property in local listener
                 return this._throwError(`Model when creating ${entryNames.join('')} not declared as a valid binding`);
             }
-            /* Add the renderable as listening to the tree */
-            let localListenerTree = this._accommodateObjectPath(modelListener.localListenerTree,
-                [propertyName]);
-            localListenerTree[listeners] = localListenerTree[listeners] || {};
+            let localListenerTree = modelListener.localListenerTree[propertyName];
             this._addToListenerTree(entryNames, localListenerTree);
-            modelListener.startListening()
+            modelListener.startListening();
         })
     }
 

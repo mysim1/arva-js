@@ -2,8 +2,9 @@
  * Clones an option object in a "lazy" way, which means that it is only (re-)cloned for the path which the getteres are triggered
  * //TODO Support caching
  */
-import {Utils} from './Utils';
-import {storedArrayObserver} from './OptionObserver';
+import {Utils}                  from './Utils';
+import {storedArrayObserver}    from './OptionObserver';
+import {Model}                  from '../../core/Model';
 
 /* */
 let deleted = Symbol('deleted');
@@ -16,7 +17,8 @@ export class LazyLoadedOptionClone {
     static get(TargetObjectType, optionToClone, listenerTree, nestedPropertyPath = [], optionObserver) {
         let root = new TargetObjectType(nestedPropertyPath, optionObserver, listenerTree);
         let optionIsArray = Array.isArray(optionToClone);
-        if (!Utils.isPlainObject(optionToClone) && !optionIsArray) {
+        let optionIsModel = optionToClone instanceof Model;
+        if (!Utils.isPlainObject(optionToClone) && !optionIsArray && !optionIsModel) {
             return root;
         }
 

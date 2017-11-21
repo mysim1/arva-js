@@ -18,19 +18,20 @@ let nestedPropertyPath = Symbol('nestedPropertyPath'),
 /**
  * Represents an option where data flows upwards
  */
+
 export class InputOption {
     constructor(incomingNestedPropertyPath, incomingOptionObserver, incomingListenerTree) {
         this[nestedPropertyPath] = incomingNestedPropertyPath.slice(0, -1);
         this[optionObserver] = incomingOptionObserver;
         this[propertyName] = incomingNestedPropertyPath[incomingNestedPropertyPath.length - 1];
         this[listenerTree] = incomingListenerTree;
-
     }
 
-    [changeValue] = (newValue) => {
+
+    [changeValue](newValue) {
         let storedOptionsObserver = this[optionObserver];
         if (this._shouldMuteUpdatesWhenChanging) {
-            //todo does this work 100% for arrays? todo: This won't work for subsequent updates, need to clear this._forbiddenUpdates... immediately after
+            //todo does this work 100% for arrays?
             if (!this._entryNames) {
                 throw new Error('Trying to change unwrapped value in InputOption');
             }
@@ -46,8 +47,9 @@ export class InputOption {
         }
     };
 
-    [unwrapValue] = (theForeignOptionObserver, theForeignNestedPropertyPath) => {
-        //TODO This function is getting a little bit too long
+    [unwrapValue] (theForeignOptionObserver, theForeignNestedPropertyPath) {
+
+
         let storedInputOptions = this[listenerTree][storedInputOption];
         if(!storedInputOptions){
             storedInputOptions = this[listenerTree][storedInputOption] = [];
@@ -55,40 +57,15 @@ export class InputOption {
         storedInputOptions.push(this);
         this[foreignNestedPropertyPath] = theForeignNestedPropertyPath;
         let storedOptionsObserver = this[optionObserver];
-        //TODO When unwrapValue is called for the second time, this._shouldMuteUpdatesWhenChanging will always go to false
+
         //There should be another solution, but not sure how to implement it
         let activeRecordings = storedOptionsObserver.getActiveRecordings();
-        let recordedEntryNames = Object.keys(activeRecordings);
-        if (recordedEntryNames.length !== 1) {
-            throw new Error(recordedEntryNames[OptionObserver.preprocess] ?
-                'Input option cannot be unwrapped inside preprocess function' :
-                recordedEntryNames.length === 0 ?
-                    'Cannot unwrap input option outside renderable initializer' :
-                    'Trying to unwrap value in InputOption but OptionObserver should have exactly one recording');
-        }
-        /* Determine if there's already listeners for this. If not, we should suppress certain updates from happening */
-        this._entryNames = [];
-        let recordedEntryName;
-        let listenersInsideListenerTree = this[listenerTree][listeners];
-        let listenerForRecordAlreadyDefined = false;
 
-        /* Go into the nested structure to get the full entryNames list (should be quite flat, if not completely) */
-        do {
-            recordedEntryNames = Object.keys(activeRecordings);
-            recordedEntryName = recordedEntryNames[0];
-            if (recordedEntryName) {
-                this._entryNames.push(recordedEntryName);
-            }
-            listenersInsideListenerTree = listenersInsideListenerTree[recordedEntryName] || {};
-            activeRecordings = activeRecordings[recordedEntryName];
-            if (listenersInsideListenerTree === true) {
-                listenerForRecordAlreadyDefined = true;
-            }
-        } while (activeRecordings);
+
+        this._determineWhetherShouldMuteUpdates(activeRecordings);
         if(theForeignOptionObserver && theForeignOptionObserver !== this[foreignOptionObserver]){
             this._setupForeignOptionObserverListener(theForeignOptionObserver)
         }
-        this._shouldMuteUpdatesWhenChanging = !listenerForRecordAlreadyDefined;
 
         return storedOptionsObserver.accessObjectPath(this[optionObserver].getOptions(), this[nestedPropertyPath].concat(this[propertyName]));
     };
@@ -113,5 +90,55 @@ export class InputOption {
                 this._valueShouldBeInvalidated = false;
             });
         })
+    }
+
+    _determineWhetherShouldMuteUpdates(activeRecordings) {
+
+        let recordedEntryNames = Object.keys(activeRecordings);
+        if (recordedEntryNames.length !== 1) {
+            throw new Error(recordedEntryNames[OptionObserver.preprocess] ?
+                'Input option cannot be unwrapped inside preprocess function' :
+                recordedEntryNames.length === 0 ?
+                    'Cannot unwrap input option outside renderable initializer' :
+                    'Trying to unwrap value in InputOption but OptionObserver should have exactly one recording');
+        }
+        //todo refactor to use symbol for _entryNames and _shouldMuteUpdatesWhenChanging
+        /* Determine if there's already listeners for this. If not, we should suppress certain updates from happening */
+
+
+
+        let recordedEntryName;
+        let listenersInsideListenerTree = this[listenerTree][listeners];
+        let listenerForRecordAlreadyDefined = false;
+
+        if(this._shouldMuteUpdatesWhenChanging !== undefined){
+            let newEntryNames = [], activeRecording = activeRecordings;
+            /* Determine the new entry names by traversing the object */
+            while(activeRecording){
+                let newKey = Object.keys(activeRecording)[0];
+                activeRecording = activeRecording[newKey];
+                if(newKey){
+                    newEntryNames.push(newKey);
+                }
+            }
+            this._shouldMuteUpdatesWhenChanging = this._entryNames.every((entryName, index) => entryName === newEntryNames[index]);
+            return;
+        }
+
+        this._entryNames = [];
+        /* Go into the nested structure to get the full entryNames list (should be quite flat, if not completely) */
+        do {
+            recordedEntryNames = Object.keys(activeRecordings);
+            recordedEntryName = recordedEntryNames[0];
+            if (recordedEntryName) {
+                this._entryNames.push(recordedEntryName);
+            }
+            listenersInsideListenerTree = listenersInsideListenerTree[recordedEntryName] || {};
+            activeRecordings = activeRecordings[recordedEntryName];
+            if (listenersInsideListenerTree === true) {
+                listenerForRecordAlreadyDefined = true;
+            }
+        } while (activeRecordings);
+        this._shouldMuteUpdatesWhenChanging = !listenerForRecordAlreadyDefined;
     }
 }
