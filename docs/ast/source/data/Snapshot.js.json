@@ -106,6 +106,7 @@
                     "column": 31
                   }
                 },
+                "static": false,
                 "computed": false,
                 "key": {
                   "type": "Identifier",
@@ -124,7 +125,6 @@
                   },
                   "name": "constructor"
                 },
-                "static": false,
                 "kind": "constructor",
                 "id": null,
                 "generator": false,
@@ -181,6 +181,7 @@
                     "column": 15
                   }
                 },
+                "static": false,
                 "computed": false,
                 "key": {
                   "type": "Identifier",
@@ -199,7 +200,6 @@
                   },
                   "name": "key"
                 },
-                "static": false,
                 "kind": "get",
                 "id": null,
                 "generator": false,
@@ -238,6 +238,7 @@
                     "column": 11
                   }
                 },
+                "static": false,
                 "computed": false,
                 "key": {
                   "type": "Identifier",
@@ -256,7 +257,6 @@
                   },
                   "name": "val"
                 },
-                "static": false,
                 "kind": "method",
                 "id": null,
                 "generator": false,
@@ -295,6 +295,7 @@
                     "column": 15
                   }
                 },
+                "static": false,
                 "computed": false,
                 "key": {
                   "type": "Identifier",
@@ -313,7 +314,6 @@
                   },
                   "name": "ref"
                 },
-                "static": false,
                 "kind": "get",
                 "id": null,
                 "generator": false,
@@ -352,6 +352,7 @@
                     "column": 19
                   }
                 },
+                "static": false,
                 "computed": false,
                 "key": {
                   "type": "Identifier",
@@ -370,7 +371,6 @@
                   },
                   "name": "getPriority"
                 },
-                "static": false,
                 "kind": "method",
                 "id": null,
                 "generator": false,
@@ -409,6 +409,7 @@
                     "column": 15
                   }
                 },
+                "static": false,
                 "computed": false,
                 "key": {
                   "type": "Identifier",
@@ -427,7 +428,6 @@
                   },
                   "name": "forEach"
                 },
-                "static": false,
                 "kind": "method",
                 "id": null,
                 "generator": false,
@@ -466,6 +466,7 @@
                     "column": 19
                   }
                 },
+                "static": false,
                 "computed": false,
                 "key": {
                   "type": "Identifier",
@@ -484,7 +485,6 @@
                   },
                   "name": "numChildren"
                 },
-                "static": false,
                 "kind": "method",
                 "id": null,
                 "generator": false,
