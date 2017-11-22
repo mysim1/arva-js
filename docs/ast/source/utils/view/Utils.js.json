@@ -263,6 +263,7 @@
                     "column": 5
                   }
                 },
+                "static": true,
                 "computed": false,
                 "key": {
                   "type": "Identifier",
@@ -281,7 +282,6 @@
                   },
                   "name": "renderableIsSurface"
                 },
-                "static": true,
                 "kind": "method",
                 "id": null,
                 "generator": false,
@@ -489,6 +489,7 @@
                     "column": 5
                   }
                 },
+                "static": true,
                 "computed": false,
                 "key": {
                   "type": "Identifier",
@@ -507,7 +508,6 @@
                   },
                   "name": "isPlainObject"
                 },
-                "static": true,
                 "kind": "method",
                 "id": null,
                 "generator": false,
@@ -825,6 +825,7 @@
                     "column": 5
                   }
                 },
+                "static": true,
                 "computed": false,
                 "key": {
                   "type": "Identifier",
@@ -843,7 +844,6 @@
                   },
                   "name": "addTranslations"
                 },
-                "static": true,
                 "kind": "method",
                 "id": null,
                 "generator": false,
@@ -1353,6 +1353,7 @@
                     "column": 5
                   }
                 },
+                "static": true,
                 "computed": false,
                 "key": {
                   "type": "Identifier",
@@ -1371,7 +1372,6 @@
                   },
                   "name": "renderableIsComposite"
                 },
-                "static": true,
                 "kind": "method",
                 "id": null,
                 "generator": false,
@@ -1655,6 +1655,7 @@
                     "column": 5
                   }
                 },
+                "static": true,
                 "computed": false,
                 "key": {
                   "type": "Identifier",
@@ -1673,7 +1674,6 @@
                   },
                   "name": "warn"
                 },
-                "static": true,
                 "kind": "method",
                 "id": null,
                 "generator": false,
@@ -2067,6 +2067,7 @@
                     "column": 5
                   }
                 },
+                "static": true,
                 "computed": false,
                 "key": {
                   "type": "Identifier",
@@ -2085,7 +2086,6 @@
                   },
                   "name": "adjustPlacementForTrueSize"
                 },
-                "static": true,
                 "kind": "method",
                 "id": null,
                 "generator": false,
@@ -3220,6 +3220,7 @@
                     "column": 5
                   }
                 },
+                "static": true,
                 "computed": false,
                 "key": {
                   "type": "Identifier",
@@ -3238,7 +3239,6 @@
                   },
                   "name": "getRenderableGroupName"
                 },
-                "static": true,
                 "kind": "method",
                 "id": null,
                 "generator": false,
@@ -4462,7 +4462,7 @@
         "label": "import",
         "keyword": "import",
         "beforeExpr": false,
-        "startsExpr": false,
+        "startsExpr": true,
         "rightAssociative": false,
         "isLoop": false,
         "isAssign": false,
@@ -4595,7 +4595,7 @@
         "label": "import",
         "keyword": "import",
         "beforeExpr": false,
-        "startsExpr": false,
+        "startsExpr": true,
         "rightAssociative": false,
         "isLoop": false,
         "isAssign": false,
