@@ -9,7 +9,8 @@
     "url": "git://github.com/Arva/arva-js.git"
   },
   "scripts": {
-    "test": "mocha --compilers js:babel/register --recursive --timeout 15000"
+    "test": "mocha --compilers js:babel/register --recursive --timeout 15000",
+    "esdoc": "node_modules/.bin/esdoc"
   },
   "bugs": {
     "url": "https://github.com/Arva/arva-js/issues"
@@ -48,13 +49,13 @@
     "babel": "^5.8.23",
     "babel-runtime": "^6.6.1",
     "chai": "^3.4.0",
+    "esdoc": "^1.0.4",
+    "esdoc-ecmascript-proposal-plugin": "^1.0.0",
+    "esdoc-inject-style-plugin": "^1.0.0",
+    "esdoc-standard-plugin": "^1.0.0",
     "eslint": "^3.1.0",
     "isparta": "^3.1.0",
     "jspm": "^0.16.32",
-    "esdoc": "^1.0.3",
-    "esdoc-standard-plugin": "^1.0.0",
-    "esdoc-inject-style-plugin": "^1.0.0",
-    "esdoc-ecmascript-proposal-plugin": "^1.0.0",
     "lodash": "^4.6.1",
     "mocha": "^2.1.0",
     "request-animation-frame-mock": "git+https://github.com/erykpiast/request-animation-frame-mock.git",
