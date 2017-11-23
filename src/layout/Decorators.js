@@ -448,6 +448,13 @@ class Layout {
     }, decoratorTypes.childDecorator)
   }
 
+
+  perspective () {
+    return this.createChainableDecorator((decorations) => {
+      decorations.perspective = true;
+    }, decoratorTypes.viewDecorator)
+  }
+
   clip (width, height, properties = {}) {
     return this.createChainableDecorator((decorations) => {
       decorations.clip = {size: [width, height], properties}
@@ -837,6 +844,7 @@ class Layout {
   }
 
   /**
+   * @deprecated
    * Makes the view flow by tweening all intermediate stages of a changed attribute of any renderable.
    *
    * @example
@@ -855,6 +863,7 @@ class Layout {
    * @returns {Layout} A chainable function
    */
   flow (flowOptions = {}) {
+    console.log('Warning: layout.flow() is deprecated. Please use flow.auto() instead!');
     return this.createChainableDecorator((decorations) => {
       decorations.useFlow = true;
       decorations.flowOptions = flowOptions || {};
@@ -1149,12 +1158,28 @@ class Flow {
    * @returns {Function}
    */
   defaultOptions (flowOptions = {}) {
-    return this.createChainableDecorator((decorations) => {
-      if (!decorations.flow) {
-        decorations.flow = {states: {}}
-      }
-      decorations.flow.defaults = {...flowOptions}
-    }, decoratorTypes.childDecorator)
+    return this.createChainableDecorator((decorations) => this._defaultOptionDecorator(decorations, flowOptions), decoratorTypes.childDecorator)
+  }
+
+
+  _defaultOptionDecorator(decorations, flowOptions)
+  {
+          if (!decorations.flow) {
+              decorations.flow = {states: {}};
+          }
+          decorations.flow.defaults = {...flowOptions};
+  }
+
+  auto() {
+      return this.createChainableDecorator((decorations, type) => {
+        if(type === decoratorTypes.childDecorator){
+            this._defaultOptionDecorator(decorations, {});
+        } else {
+            decorations.useFlow = true;
+            decorations.flowOptions = flowOptions || {};
+            decorations.transition = flowOptions.transition || undefined;
+        }
+      }, decoratorTypes.viewOrChild)
   }
 
   /**

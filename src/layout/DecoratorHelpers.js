@@ -78,7 +78,13 @@ export function prepPrototypeDecorations (prototype) {
 
 export let decoratorTypes = {childDecorator: 1, viewDecorator: 2, viewOrChild: 3};
 
-export let createChainableDecorator = function (method, type) {
+/**
+ *
+ * @param {Function} callback accepting the following arguments: decorations, type, viewOrRenderable, renderableName, descriptor
+ * @param {Number} type One of the available decorator types
+ * @returns {Function} A decorator function
+ */
+export let createChainableDecorator = function (callback, type) {
 
     let methodToReturn = function (viewOrRenderable, renderableName, descriptor) {
         if (methodToReturn.lastResult) {
@@ -93,10 +99,10 @@ export let createChainableDecorator = function (method, type) {
          * rather than just executing the methods. This is needed so that decorators can be applied both directly as methods in
          * in combination with them being used actually as decorators, on the same renderable */
         if(!descriptor && viewOrRenderable instanceof RenderablePrototype){
-            viewOrRenderable.addDirectlyAppliedDecoratorFunction(method)
+            viewOrRenderable.addDirectlyAppliedDecoratorFunction(callback)
         } else {
 
-            method(decorations, type, viewOrRenderable, renderableName, descriptor);
+            callback(decorations, type, viewOrRenderable, renderableName, descriptor);
         }
 
 

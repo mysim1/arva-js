@@ -612,6 +612,7 @@ export class View extends FamousView {
             flow: !!this.decorations.useFlow || hasFlowyRenderables,
             partialFlow: !this.decorations.useFlow,
             nativeScroll: !!this.decorations.nativeScrollable,
+            perspective: !!this.decorations.perspective,
             flowOptions: this.decorations.flowOptions || {spring: {period: 200}},
             layout: function (context, options) {
 
