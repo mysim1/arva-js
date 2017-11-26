@@ -38,9 +38,9 @@ export class AudioSurface extends FamousSurface {
       return this._analyserId!=null;
     }
 
-    constructor(options = {}) {
+    constructor(options = { properties: {}}) {
       super();
-      this.streamUrl = options.url || '';
+      this.streamUrl = options.properties.url || '';
       this._value = '';
       this._name = options.name || '';
       this._bufferLength = 0;
@@ -109,7 +109,7 @@ export class AudioSurface extends FamousSurface {
     /**
      * Start emitting audio frames to subscribers of this surface
      */
-    startAnalyser(options) {
+    startAnalyser(options = {}) {
       let audioContext = new (window.AudioContext || window.webkitAudioContext); // this is because it's not been standardised accross browsers yet.
       this._analyser = audioContext.createAnalyser();
 
@@ -117,7 +117,7 @@ export class AudioSurface extends FamousSurface {
       this._analyser.smoothingTimeConstant = options.smoothingTimeConstant || 0.8;
 
       var source = audioContext.createMediaElementSource(this._element); // this is where we hook up the <audio> element
-      source.connect(analyser);
+      source.connect(this._analyser);
       this._analyser.connect(audioContext.destination);
 
       this._bufferLength = this._analyser.frequencyBinCount;
@@ -158,5 +158,6 @@ export class AudioSurface extends FamousSurface {
       if (this.streamUrl) {
         this._element.setAttribute('src', this.streamUrl);
       }
+      this._element.crossOrigin = 'anonymous';
     }
 }
