@@ -349,6 +349,7 @@ export class FullSizeLayoutHelper extends BaseLayoutHelper {
                 size: context.size,
                 opacity: renderable.decorations.opacity === undefined ? 1 : renderable.decorations.opacity,
                 callback,
+                rotate: renderable.decorations.rotate,
                 transition
             });
         }

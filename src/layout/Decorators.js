@@ -3,7 +3,7 @@
 
  @author: Hans van den Akker (mysim1)
  @license NPOSL-3.0
- @copyright Bizboard, 2016
+ @copyright Bizboard, 2017
 
  */
 import merge                    from 'lodash/merge.js'
@@ -14,83 +14,11 @@ import LayoutUtility            from 'famous-flex/LayoutUtility.js'
 import Easing                   from 'famous/transitions/Easing.js'
 
 import { Utils }                    from '../utils/view/Utils.js'
-import { onOptionChange } from '../utils/view/OptionObserver'
+import { onOptionChange }           from '../utils/view/OptionObserver'
+import {  prepDecoratedRenderable,
+prepPrototypeDecorations, decoratorTypes,
+createChainableDecorator}            from './DecoratorHelpers';
 
-/**
- *
- * @param viewOrRenderable
- * @param renderableName
- * @param descriptor
- * @returns {*}
- */
-function prepDecoratedRenderable (viewOrRenderable, renderableName, descriptor) {
-
-
-  /* This function can also be called as prepDecoratedRenderable(renderable) */
-  if (!renderableName && !descriptor) {
-    let renderable = viewOrRenderable
-    renderable.decorations = renderable.decorations || {}
-    return renderable
-  }
-  let view = viewOrRenderable
-
-  if (!view.renderableConstructors) {
-    view.renderableConstructors = new Map()
-  }
-
-  let constructors = view.renderableConstructors
-
-  /* Because the inherited views share the same prototype, we'll have to split it up depending on which subclass we're referring out */
-  let specificRenderableConstructors = constructors.get(view.constructor)
-  if (!specificRenderableConstructors) {
-    specificRenderableConstructors = constructors.set(view.constructor, {}).get(view.constructor)
-  }
-
-  if (!specificRenderableConstructors[renderableName]) {
-    /* Getters have a get() method on the descriptor, class properties have an initializer method.
-     * get myRenderable(){ return new Surface() } => descriptor.get();
-     * myRenderable = new Surface(); => descriptor.initializer();
-     */
-    if (descriptor.get) {
-      Utils.warn(`Adding renderables on views through getters has been deprecated (${renderableName}).`)
-      specificRenderableConstructors[renderableName] = descriptor.get
-    } else if (descriptor.initializer) {
-      specificRenderableConstructors[renderableName] = descriptor.initializer
-    }
-  }
-  let constructor = specificRenderableConstructors[renderableName]
-  if (!constructor.decorations) {
-    constructor.decorations = {descriptor: descriptor}
-  }
-
-  return constructor
-}
-
-/**
- * Extracts a decorations object
- *
- * @param {View} prototype
- * @returns {Object} The decorations for the prototype
- */
-function prepPrototypeDecorations (prototype) {
-
-  /* To prevent inherited classes from taking each others class-level decorators, we need to store these decorations in
-   * a map, similarly to function preparing a decorated renderable
-   */
-  if (!prototype.decorationsMap) {
-    prototype.decorationsMap = new Map()
-  }
-
-  let {decorationsMap} = prototype
-
-  let decorations = decorationsMap.get(prototype.constructor)
-  if (!decorations) {
-    decorations = decorationsMap.set(prototype.constructor, {}).get(prototype.constructor)
-  }
-
-  /* Return the class' prototype, so it can be extended by the decorator */
-  return decorations
-}
 
 /**
  * Describes a set of decorators used for layouting of a renderable in a View.
@@ -110,73 +38,35 @@ export const bindings = {
       prepPrototypeDecorations(target.prototype).defaultOptions = defaultOptions
     }
   },
-  onChange: (transformFunction) => {
-    return (optionsPassed, optionNameToBind, descriptor) => {
-      let optionChangeListeners = optionsPassed[onOptionChange]
-      if (!optionChangeListeners) {
-        optionChangeListeners = optionsPassed[onOptionChange] = {}
-      }
-      optionChangeListeners[optionNameToBind] = transformFunction
-    }
-  },
   /**
    * Defines a preprocess function to use before the options are assigned. This can be used to simplify the
    * flow of your app. The preprocess function should modify the contents of the options passed.
    * Return value is ignored. It is important that the function doesn't modify defaultOptions
    *
    * @example
-   * @bindings.preprocess((options, defaultOptions) => {
+   * @bindings.preprocess()
+   * propagateBackgroundColor((options, defaultOptions) {
    *  // Shortcut way of specifying the sideMenu.menuItem.backgroundColor
    *  options.sideMenu = combineOptions(defaultOptions.sideMenu, {menuItem: {backgroundColor: options.backgroundColor}})
    * })
    *
-   * @param preprocessFunction
    * @returns {function(*)}
    */
-  preprocess: (preprocessFunction) => {
-    return (target) => {
-      prepPrototypeDecorations(target.prototype).preprocessBindings = preprocessFunction
+  preprocess: () => {
+    return (prototype, methodName, descriptor) => {
+      let decorations = prepPrototypeDecorations(prototype);
+        let {preprocessBindings} = decorations;
+          if(!preprocessBindings){
+            preprocessBindings = decorations.preprocessBindings = [];
+          }
+          let preprocessFunction  = descriptor.value;
+          preprocessBindings.push({preprocessFunction, name: methodName});
     }
   }
 
-}
-
-let decoratorTypes = {childDecorator: 1, viewDecorator: 2, viewOrChild: 3}
-let lastResult
-
-let createChainableDecorator = function (method, type) {
-
-  let methodToReturn = function (viewOrRenderable, renderableName, descriptor) {
-    if (methodToReturn.lastResult) {
-      methodToReturn.lastResult(viewOrRenderable, renderableName, descriptor)
-    }
-    if (type === decoratorTypes.viewOrChild) {
-      type = typeof viewOrRenderable === 'function' ? decoratorTypes.viewDecorator : decoratorTypes.childDecorator
-    }
-    let decorations = type === decoratorTypes.childDecorator ? prepDecoratedRenderable(...arguments).decorations : prepPrototypeDecorations(viewOrRenderable.prototype)
-
-    return method(decorations, type, viewOrRenderable, renderableName, descriptor)
-  }
-
-  let root = this
-  if (root && root.originalObject) {
-    methodToReturn.lastResult = root
-    root = methodToReturn.originalObject = root.originalObject
-  } else {
-    methodToReturn.originalObject = this
-  }
-  if (root) {
-    lastResult = methodToReturn
-    methodToReturn.createChainableDecorator = createChainableDecorator.bind(methodToReturn)
-
-    Object.defineProperties(methodToReturn, Object.getOwnPropertyDescriptors(root.__proto__))
-  }
-
-  return methodToReturn
-}
+};
 
 
-let extraLayout = Symbol('extraLayout')
 
 /**
  * Describes a set of decorators used for layouting of a renderable in a View.
@@ -187,7 +77,7 @@ class Layout {
    * @ignore
    * Add to self in order to make the scope working
    */
-  createChainableDecorator = createChainableDecorator
+  createChainableDecorator = createChainableDecorator;
 
   /**
    * Merely marks a view property as a decorated renderable, which allows it to be rendered.
@@ -261,12 +151,12 @@ class Layout {
         space = space || decorations.dock.space
       }
 
-      let width = dockMethod === 'left' || dockMethod === 'right' ? size : undefined
-      let height = dockMethod === 'top' || dockMethod === 'bottom' ? size : undefined
+      let width = dockMethod === 'left' || dockMethod === 'right' ? size : undefined;
+      let height = dockMethod === 'top' || dockMethod === 'bottom' ? size : undefined;
 
-      let twoDimensionalSize = [width, height]
+      let twoDimensionalSize = [width, height];
       // Todo refactor also the z index to the dock, probably
-      decorations.dock = {space, dockMethod, size: twoDimensionalSize}
+      decorations.dock = {space, dockMethod, size: twoDimensionalSize};
 
       if (!decorations.translate) {
         decorations.translate = [0, 0, 0]
@@ -277,23 +167,6 @@ class Layout {
     }, decoratorTypes.childDecorator)
   }
 
-  /**
-   *
-   * @typedef {Object} DockTypes
-   * @property {dockLeft} left Dock to the left
-   * @property {dockRight} right Dock to the right
-   * @property {dockBottom} bottom Dock to the bottom
-   * @property {dockTop} top Dock to the top
-   * @property {fill} fill Fill the rest of the space
-   */
-
-  /**
-   * Extra layout
-   * @type {DockTypes}
-   */
-  get extra () {
-    return extraLayout;
-  }
   /**
    * Docks things. See method descriptors for "Dockings"
    * @type {DockTypes}
@@ -318,7 +191,7 @@ class Layout {
        * dockedRenderable = Surface.with({properties: {backgroundColor: 'red'}});
        *
        * @memberOf dock
-       * @param {Number|Function} [size]. The size of the renderable in the one dimension that is being docked, e.g.
+       * @param {Number|Function|Boolean} [size]. The size of the renderable in the one dimension that is being docked, e.g.
        * dock left or right will be width, whereas dock top or bottom will result in height. For more information about
        * different variations, see layout.size.
        * @param {Number} [space]. Any space that should be inserted before the docked renderable
@@ -346,7 +219,7 @@ class Layout {
        *   .align(0.5, 0)
        * dockedRenderable = new Surface({properties: {backgroundColor: 'red'}});
        *
-       * @param {Number|Function} [size]. The size of the renderable in the one dimension that is being docked, e.g.
+       * @param {Number|Function|Boolean} [size]. The size of the renderable in the one dimension that is being docked, e.g.
        * dock left or right will be width, whereas dock top or bottom will result in height. For more information about
        * different variations, see layout.size.
        * @param {Number} [space]. Any space that should be inserted before the docked renderable
@@ -375,7 +248,7 @@ class Layout {
        * dockedRenderable = Surface.with({properties: {backgroundColor: 'red'}});
        *
        *
-       * @param {Number|Function} [size]. The size of the renderable in the one dimension that is being docked, e.g.
+       * @param {Number|Function|Boolean} [size]. The size of the renderable in the one dimension that is being docked, e.g.
        * dock left or right will be width, whereas dock top or bottom will result in height. For more information about
        * different variations, see layout.size.
        * @param {Number} [space = 0]. Any space that should be inserted before the docked renderable
@@ -404,7 +277,7 @@ class Layout {
        * dockedRenderable = Surface.with({properties: {backgroundColor: 'red'}});
        *
        *
-       * @param {Number|Function} [size]. The size of the renderable in the one dimension that is being docked, e.g.
+       * @param {Number|Function|Boolean} [size]. The size of the renderable in the one dimension that is being docked, e.g.
        * dock left or right will be width, whereas dock top or bottom will result in height. For more information about
        * different variations, see layout.size.
        * @param {Number} [space = 0]. Any space that should be inserted before the docked renderable
@@ -475,6 +348,21 @@ class Layout {
     }, decoratorTypes.childDecorator)
   }
 
+    /**
+     * Makes modifications to a surface using old-style famous modifiers (e.g MapModifier for famous-map)
+     * @example
+     * @layout.mapModifier(new MapModifier{ mapView: map, position: {lat: 0, lng: 0} })
+     * // Makes a surface that is linked to the position (0, 0)
+     *
+     * @param {Object} [modifier]. modifier object.
+     * @returns {Function}
+     */
+    modifier(modifier = {}) {
+        return this.createChainableDecorator((decorations) => {
+            decorations.modifier = modifier;
+        }, decoratorTypes.childDecorator);
+    }
+
   /**
    * Makes the renderable swipable with physics-like velocity after the dragging is released. Emits event
    * 'thresholdReached' with arguments ('x'|'y', 0|1) when any thresholds have been reached. this.renderables[name]
@@ -485,7 +373,6 @@ class Layout {
    *  .swipable({xRange: [0, 100], snapX: true})
    * //Make a red box that can slide to the right
    * swipable = Surface.with({properties: {backgroundColor: 'red'});
-     *
    * @param {Object} options
    * @param {Boolean} [options.snapX] Whether to snap to the x axis
    * @param {Boolean} [options.snapY] Whether to snap to the Y axis
@@ -561,6 +448,13 @@ class Layout {
     }, decoratorTypes.childDecorator)
   }
 
+
+  perspective () {
+    return this.createChainableDecorator((decorations) => {
+      decorations.perspective = true;
+    }, decoratorTypes.viewDecorator)
+  }
+
   clip (width, height, properties = {}) {
     return this.createChainableDecorator((decorations) => {
       decorations.clip = {size: [width, height], properties}
@@ -603,8 +497,8 @@ class Layout {
    */
   rotateFrom (x, y, z) {
     return this.createChainableDecorator((decorations) => {
-      let propertyName = 'rotate'
-      let properties = decorations[propertyName] || [0, 0, 0]
+      let propertyName = 'rotate';
+      let properties = decorations[propertyName] || [0, 0, 0];
       decorations[propertyName] = [properties[0] + x, properties[1] + y, properties[2] + z]
     }, decoratorTypes.childDecorator)
   }
@@ -630,40 +524,40 @@ class Layout {
 
   _stickTo (stick) {
     return this.createChainableDecorator((decorations) => {
-      let origin = [0, 0], align = [0, 0]
+      let origin = [0, 0], align = [0, 0];
       switch (stick) {
         case 'center':
-          origin = align = [0.5, 0.5]
-          break
+          origin = align = [0.5, 0.5];
+          break;
         case 'bottomRight':
-          origin = align = [1, 1]
-          break
+          origin = align = [1, 1];
+          break;
         case 'bottomLeft':
-          origin = align = [0, 1]
-          break
+          origin = align = [0, 1];
+          break;
         case 'topRight':
-          origin = align = [1, 0]
-          break
+          origin = align = [1, 0];
+          break;
         case 'left':
-          origin = align = [0, 0.5]
-          break
+          origin = align = [0, 0.5];
+          break;
         case 'right':
-          origin = align = [1, 0.5]
-          break
+          origin = align = [1, 0.5];
+          break;
         case 'top':
-          origin = align = [0.5, 0]
-          break
+          origin = align = [0.5, 0];
+          break;
         case 'bottom':
-          origin = align = [0.5, 1]
-          break
+          origin = align = [0.5, 1];
+          break;
         default:
         case 'topLeft':
-          origin = align = [0, 0]
-          break
+          origin = align = [0, 0];
+          break;
 
       }
 
-      decorations.origin = origin
+      decorations.origin = origin;
       decorations.align = align
     }, decoratorTypes.childDecorator)
   }
@@ -811,7 +705,7 @@ class Layout {
     }
 
     return this.createChainableDecorator((decorations, type) => {
-      let propertyName
+      let propertyName;
       if (type === decoratorTypes.viewDecorator) {
         propertyName = 'extraTranslate'
       } else {
@@ -846,13 +740,13 @@ class Layout {
       if (Array.isArray(x)) {
         throw Error('Please specify translate as three arguments, and not as an array')
       }
-      let propertyName
+      let propertyName;
       if (type === decoratorTypes.viewDecorator) {
         propertyName = 'extraTranslate'
       } else {
         propertyName = 'translate'
       }
-      let properties = decorations[propertyName] || [0, 0, 0]
+      let properties = decorations[propertyName] || [0, 0, 0];
       decorations[propertyName] = [properties[0] + x, properties[1] + y, properties[2] + z]
     }, decoratorTypes.viewOrChild)
   }
@@ -934,7 +828,7 @@ class Layout {
    * @param {Object} [options.transfer] Transfer options.
    * @param {Object} [options.transfer.transition] Transfer specific transition options.
    * @param {Number} [options.transfer.zIndex] Z-index the tranferables are moved on top while animating (default: 10).
-   * @param {Bool} [options.transfer.fastResize] When enabled, scales the renderable i.s.o. resizing when doing the transfer animation (default: true).
+   * @param {Boolean} [options.transfer.fastResize] When enabled, scales the renderable i.s.o. resizing when doing the transfer animation (default: true).
    * @param {Array} [options.transfer.items] Ids (key/value) pairs (source-id/target-id) of the renderables that should be transferred.
    * @returns {Function}
    */
@@ -950,6 +844,7 @@ class Layout {
   }
 
   /**
+   * @deprecated
    * Makes the view flow by tweening all intermediate stages of a changed attribute of any renderable.
    *
    * @example
@@ -958,9 +853,9 @@ class Layout {
      * ...
      * }
    *
-   * @param {Object} Options to pass as flowOptions to the LayoutController
-   * @param {Bool} [flowOptions.transition] If specified, sets the default transition to use
-   * @param {Bool} [flowOptions.reflowOnResize] Smoothly reflows renderables on resize (only used when flow = true) (default: `true`).
+   * @param {Object} flowOptions to pass as flowOptions to the LayoutController
+   * @param {Boolean} [flowOptions.transition] If specified, sets the default transition to use
+   * @param {Boolean} [flowOptions.reflowOnResize] Smoothly reflows renderables on resize (only used when flow = true) (default: `true`).
    * @param {Object} [flowOptions.spring] Spring options used by nodes when reflowing (default: `{dampingRatio: 0.8, period: 300}`).
    * @param {Object} [flowOptions.properties] Properties which should be enabled or disabled for flowing.
    * @param {Spec} [flowOptions.insertSpec] Size, transform, opacity... to use when inserting new renderables into the scene (default: `{}`).
@@ -968,9 +863,10 @@ class Layout {
    * @returns {Layout} A chainable function
    */
   flow (flowOptions = {}) {
+    console.log('Warning: layout.flow() is deprecated. Please use flow.auto() instead!');
     return this.createChainableDecorator((decorations) => {
-      decorations.useFlow = true
-      decorations.flowOptions = flowOptions || {}
+      decorations.useFlow = true;
+      decorations.flowOptions = flowOptions || {};
       decorations.transition = flowOptions.transition || undefined
     }, decoratorTypes.viewDecorator)
   }
@@ -1005,7 +901,7 @@ class Layout {
    * @returns {Layout} A chainable function
    */
   nativeScrollable (options = {}) {
-    let {scrollY = true, scrollX = false} = options
+    let {scrollY = true, scrollX = false} = options;
     return this.createChainableDecorator((decorations) => {
       decorations.nativeScrollable = {scrollY, scrollX}
     }, decoratorTypes.viewDecorator)
@@ -1070,23 +966,23 @@ class Layout {
    */
   columnDockPadding (maxContentWidth = 720, defaultPadding = [0, 16, 0, 16]) {
     return this.createChainableDecorator((decorations) => {
-      let normalisedPadding = LayoutUtility.normalizeMargins(defaultPadding)
+      let normalisedPadding = LayoutUtility.normalizeMargins(defaultPadding);
 
       /* Default to 16px dockPadding */
-      this.dockPadding(normalisedPadding)
+      this.dockPadding(normalisedPadding);
 
-      /* Calculate the dockPadding dynamically every time the View's size changes.
-       * The results from calling this method are further handled in View.js.
-       *
-       * The logic behind this is 16px padding by default, unless the screen is
-       * wider than 720px. In that case, the padding is increased to make the content
-       * in between be at maximum 720px. */
-      decorations.dynamicDockPadding = function (size) {
-        let sideWidth = size[0] > maxContentWidth + 32 ? (size[0] - maxContentWidth) / 2 : normalisedPadding[1]
-        return [normalisedPadding[0], sideWidth, normalisedPadding[2], sideWidth]
-      }
-    }, decoratorTypes.viewDecorator)
-  }
+            /* Calculate the dockPadding dynamically every time the View's size changes.
+             * The results from calling this method are further handled in View.js.
+             *
+             * The logic behind this is 16px padding by default, unless the screen is
+             * wider than 720px. In that case, the padding is increased to make the content
+             * in between be at maximum 720px. */
+            decorations.dynamicDockPadding = function(size, newWidth = maxContentWidth) {
+                let sideWidth = size[0] > newWidth + 32 ? (size[0] - newWidth) / 2 : normalisedPadding[1];
+                return [normalisedPadding[0], sideWidth, normalisedPadding[2], sideWidth];
+            }
+        }, decoratorTypes.viewDecorator);
+    }
 
   /**
    *
@@ -1116,17 +1012,8 @@ class Layout {
   }
 }
 
-export const layout = new Layout()
+export const layout = new Layout();
 
-function getPreviousResults (lastResult) {
-  let gatheredResults = []
-  let currentResult = lastResult
-  while (currentResult) {
-    gatheredResults.push(currentResult)
-    currentResult = currentResult.lastResult
-  }
-  return gatheredResults
-}
 
 /**
  * Function used to show things in a dynamic manner, depending on the options passed.
@@ -1146,14 +1033,14 @@ export const dynamic = (dynamicFunction) =>
       decorations.dynamicFunctions = []
     }
     decorations.dynamicFunctions.push(dynamicFunction)
-  }, decoratorTypes.viewOrChild)
+  }, decoratorTypes.viewOrChild);
 
 class Event {
   /**
    * @ignore
    * Add to self in order to make the scope working
    */
-  createChainableDecorator = createChainableDecorator
+  createChainableDecorator = createChainableDecorator;
 
   /**
    * Internal function used by the event decorators to generalize the idea of on, once, and off.
@@ -1161,17 +1048,19 @@ class Event {
    * @param {String} subscriptionType A type of subscription function, e.g. on
    * @param {String} eventName The event name
    * @param {Function} callback that is called when event has happened
+   * @param options
    * @returns {Function}
    */
-  _subscribe (subscriptionType, eventName, callback) {
+  _subscribe (subscriptionType, eventName, callback, options = {}) {
     return this.createChainableDecorator((decorations) => {
       if (!decorations.eventSubscriptions) {
         decorations.eventSubscriptions = []
       }
       decorations.eventSubscriptions.push({
-        subscriptionType: subscriptionType,
-        eventName: eventName,
-        callback: callback
+        subscriptionType,
+        eventName,
+        callback,
+          options
       })
     }, decoratorTypes.childDecorator)
   }
@@ -1189,10 +1078,11 @@ class Event {
    *
    * @param eventName
    * @param callback
+   * @param {Object} options Options that are forwarded to the EventHandler options
    * @returns {Layout} A chainable function
    */
-  on (eventName, callback) {
-    return this._subscribe('on', eventName, callback)
+  on (eventName, callback, options) {
+    return this._subscribe('on', eventName, callback, options);
   }
 
   /**
@@ -1213,7 +1103,7 @@ class Event {
    * @returns {Layout} A chainable function
    */
   once (eventName, callback) {
-    return this._subscribe('once', eventName, callback)
+    return this._subscribe('once', eventName, callback);
   }
 
   /**
@@ -1230,9 +1120,9 @@ class Event {
    * @returns {Function}
    */
   pipe (pipeToName) {
-    this.createChainableDecorator((decorations) => {
-      if (decorations.pipes) {
-        decorations.pipes = []
+    return this.createChainableDecorator((decorations) => {
+      if (!decorations.pipes) {
+        decorations.pipes = [];
       }
 
       decorations.pipes.push(pipeToName)
@@ -1240,7 +1130,7 @@ class Event {
   }
 }
 
-export const event = new Event()
+export const event = new Event();
 
 class Flow {
 
@@ -1248,7 +1138,7 @@ class Flow {
    * @ignore
    * Add to self in order to make the scope working
    */
-  createChainableDecorator = createChainableDecorator
+  createChainableDecorator = createChainableDecorator;
 
   /**
    *
@@ -1268,12 +1158,28 @@ class Flow {
    * @returns {Function}
    */
   defaultOptions (flowOptions = {}) {
-    return this.createChainableDecorator((decorations) => {
-      if (!decorations.flow) {
-        decorations.flow = {states: {}}
-      }
-      decorations.flow.defaults = {...flowOptions}
-    }, decoratorTypes.childDecorator)
+    return this.createChainableDecorator((decorations) => this._defaultOptionDecorator(decorations, flowOptions), decoratorTypes.childDecorator)
+  }
+
+
+  _defaultOptionDecorator(decorations, flowOptions)
+  {
+          if (!decorations.flow) {
+              decorations.flow = {states: {}};
+          }
+          decorations.flow.defaults = {...flowOptions};
+  }
+
+  auto() {
+      return this.createChainableDecorator((decorations, type) => {
+        if(type === decoratorTypes.childDecorator){
+            this._defaultOptionDecorator(decorations, {});
+        } else {
+            decorations.useFlow = true;
+            decorations.flowOptions = flowOptions || {};
+            decorations.transition = flowOptions.transition || undefined;
+        }
+      }, decoratorTypes.viewOrChild)
   }
 
   /**
@@ -1303,9 +1209,9 @@ class Flow {
       if (!decorations.flow) {
         decorations.flow = {}
       }
-      decorations.flow.defaultState = stateName
+      decorations.flow.defaultState = stateName;
 
-      this.stateStep(stateName, stateOptions, ...transformations)(target, renderableName, descriptor)
+      this.stateStep(stateName, stateOptions, ...transformations)(target, renderableName, descriptor);
       for (let transformation of transformations) {
         transformation(target, renderableName, descriptor)
       }
@@ -1398,4 +1304,4 @@ class Flow {
   }
 }
 
-export const flow = new Flow()
+export const flow = new Flow();

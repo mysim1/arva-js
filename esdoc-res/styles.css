@@ -137,7 +137,7 @@ h3[data-ice="anchor"] {
     box-sizing: content-box;
 }
 
-h3[data-ice="anchor"].inner-link-active {
+h1[data-ice="anchor"].inner-link-active h3[data-ice="anchor"].inner-link-active {
     background: inherit;
     background-clip: padding-box;
     background-color: rgb(255,255,150);

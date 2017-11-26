@@ -70,7 +70,7 @@ export class App {
         this.context = context;
 
         if(this.constructor.loaded && typeof this.constructor.loaded === 'function') {
-            try { this.constructor.loaded(); } catch(error) { console.log('Caught exception in App.loaded():', error); }
+            this.constructor.loaded();
         }
 
         /* Load controllers */

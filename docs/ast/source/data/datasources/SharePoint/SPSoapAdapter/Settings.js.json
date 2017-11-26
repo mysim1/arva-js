@@ -106,6 +106,7 @@
                     "column": 5
                   }
                 },
+                "static": true,
                 "computed": false,
                 "key": {
                   "type": "Identifier",
@@ -124,7 +125,6 @@
                   },
                   "name": "localKeyPrefix"
                 },
-                "static": true,
                 "kind": "get",
                 "id": null,
                 "generator": false,

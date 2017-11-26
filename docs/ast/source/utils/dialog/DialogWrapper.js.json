@@ -568,6 +568,7 @@
                     "column": 5
                   }
                 },
+                "static": false,
                 "computed": false,
                 "key": {
                   "type": "Identifier",
@@ -587,7 +588,6 @@
                   "name": "determineSizeWithMargins",
                   "leadingComments": null
                 },
-                "static": false,
                 "kind": "method",
                 "id": null,
                 "generator": false,
@@ -1789,6 +1789,7 @@
                     }
                   }
                 ],
+                "static": false,
                 "computed": false,
                 "key": {
                   "type": "Identifier",
@@ -1807,7 +1808,6 @@
                   },
                   "name": "dialog"
                 },
-                "static": false,
                 "value": {
                   "type": "MemberExpression",
                   "start": 989,
@@ -1904,6 +1904,7 @@
                     "column": 5
                   }
                 },
+                "static": false,
                 "computed": false,
                 "key": {
                   "type": "Identifier",
@@ -1922,7 +1923,6 @@
                   },
                   "name": "onNewParentSize"
                 },
-                "static": false,
                 "kind": "method",
                 "id": null,
                 "generator": false,
@@ -2095,6 +2095,7 @@
                     "column": 5
                   }
                 },
+                "static": false,
                 "computed": false,
                 "key": {
                   "type": "Identifier",
@@ -2114,7 +2115,6 @@
                   "name": "getSize",
                   "leadingComments": null
                 },
-                "static": false,
                 "kind": "method",
                 "id": null,
                 "generator": false,
@@ -3192,7 +3192,7 @@
         "label": "import",
         "keyword": "import",
         "beforeExpr": false,
-        "startsExpr": false,
+        "startsExpr": true,
         "rightAssociative": false,
         "isLoop": false,
         "isAssign": false,
@@ -3375,7 +3375,7 @@
         "label": "import",
         "keyword": "import",
         "beforeExpr": false,
-        "startsExpr": false,
+        "startsExpr": true,
         "rightAssociative": false,
         "isLoop": false,
         "isAssign": false,
