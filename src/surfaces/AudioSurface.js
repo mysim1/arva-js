@@ -6,7 +6,7 @@ import FamousSurface from 'famous/core/Surface.js';
  *   fragment. Like an HTML div, it can accept internal markup,
  *   properties, classes, and handle events.
  *
- * @class Surface
+ * @class AudioSurface
  * @constructor
  *
  * @param {Object} [options] default option overrides
@@ -155,6 +155,8 @@ export class AudioSurface extends FamousSurface {
      * @private
      */
     deploy() {
-      this._element.setAttribute('src', this.streamUrl);
+      if (this.streamUrl) {
+        this._element.setAttribute('src', this.streamUrl);
+      }
     }
 }
