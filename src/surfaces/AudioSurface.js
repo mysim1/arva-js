@@ -39,26 +39,22 @@ export class AudioSurface extends FamousSurface {
     }
 
     constructor(options = {}) {
-        super();
-        var self = this;
-        this.streamUrl = options.url || '';
-        this._value = '';
-        this._name = options.name || '';
-        this._bufferLength = 0;
+      super();
+      this.streamUrl = options.url || '';
+      this._value = '';
+      this._name = options.name || '';
+      this._bufferLength = 0;
 
-        this.on('click', this.focus.bind(this));
-        this._handlePlaybackEvents();
+      this._handlePlaybackEvents();
     }
 
     _handlePlaybackEvents() {
-
+      this.on('click', this.focus.bind(this));
       this.on('emptied', () => { if (this.analyserActive) this.stopAnalyser(); });
       this.on('ended', () => { if (this.analyserActive) this.stopAnalyser(); });
       this.on('error', () => { if (this.analyserActive) this.stopAnalyser(); });
       this.on('pause', () => { if (this.analyserActive) this.stopAnalyser(); });
-
     }
-
 
     focus() {
         if (this._currentTarget)
@@ -71,7 +67,6 @@ export class AudioSurface extends FamousSurface {
             this._currentTarget.blur();
         return this;
     }
-
 
     setName() {
         this._name = str;
@@ -132,6 +127,14 @@ export class AudioSurface extends FamousSurface {
     }
 
     /**
+     * Stop emitting audio frames to subscribers of this surface
+     */
+    stopAnalyser() {
+      cancelAnimationFrame(this._analyserId);
+      delete this._analyserId;
+    }
+
+    /**
      * Emit audio frames to subscribers of this surface
      * @private
      */
@@ -146,16 +149,6 @@ export class AudioSurface extends FamousSurface {
       this.emit('frequencydata', this._streamData);
       this._analyserId = requestAnimationFrame(this._loopAnalyser.bind(this));
     }
-
-    /**
-     * Stop emitting audio frames to subscribers of this surface
-     */
-    stopAnalyser() {
-      cancelAnimationFrame(this._analyserId);
-      delete this._analyserId;
-    }
-
-    
 
     /**
      * Re-loads the audio element
