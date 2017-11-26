@@ -106,6 +106,7 @@
                     "column": 5
                   }
                 },
+                "static": true,
                 "computed": false,
                 "key": {
                   "type": "Identifier",
@@ -124,7 +125,6 @@
                   },
                   "name": "base64toBlob"
                 },
-                "static": true,
                 "kind": "method",
                 "id": null,
                 "generator": false,

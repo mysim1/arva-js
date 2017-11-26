@@ -1,25 +1,58 @@
 {
   "source": "./src/",
   "destination": "./docs",
-  "styles": ["./esdoc-res/styles.css"],
   "plugins": [
-    {"name": "./esdoc-res/arvalizer.js"}
-  ],
-  "manual": {
-    "globalIndex": false,
-    "asset":"./esdoc-res/manual-asset",
-    "overview": ["./esdoc-res/tutorial.md"]
-  },
-  "lint": false,
-  "experimentalProposal": {
-    "classProperties": true,
-    "objectRestSpread": true,
-    "decorators": true,
-    "doExpressions": true,
-    "functionBind": true,
-    "asyncGenerators": true,
-    "exportExtensions": true,
-    "dynamicImport": true
-  },
-  "title": "Arva"
+    {
+      "name": "esdoc-inject-style-plugin",
+      "option": {
+        "enable": true,
+        "styles": ["./esdoc-res/styles.css"]
+      }
+    },
+    {
+      "name": "esdoc-standard-plugin",
+      "option": {
+        "lint": {"enable": false},
+        "coverage": {"enable": true},
+        "accessor": {"access": ["public", "protected", "private"], "autoPrivate": true},
+        "undocumentIdentifier": {"enable": true},
+        "unexportedIdentifier": {"enable": false},
+        "typeInference": {"enable": true},
+        "brand": {
+          "logo": "./esdoc-res/arva_on_black.jpg",
+          "title": "Arva",
+          "description": "this is awesome library",
+          "repository": "https://github.com/Arva/arva-js",
+          "site": "http://arva.io",
+          "author": "https://twitter.com/arvamazing",
+          "image": "http://arva.io/img/logo-arva.png"
+        },
+        "manual": {
+          "index": "./esdoc-res/getting-started/installation.md",
+          "globalIndex": true,
+          "asset":"./esdoc-res/manual-asset",
+          "files":["./esdoc-res/tutorial.md",
+                   "./esdoc-res/getting-started/installation.md",
+                   "./esdoc-res/getting-started/first-app.md"
+                  ]
+        }
+      }
+    },
+    {
+      "name": "esdoc-ecmascript-proposal-plugin",
+      "option": {
+        "classProperties": true,
+        "objectRestSpread": true,
+        "decorators": true,
+        "doExpressions": true,
+        "functionBind": true,
+        "asyncGenerators": true,
+        "exportExtensions": true,
+        "dynamicImport": true
+      }
+    },
+    {
+      "name": "./esdoc-res/arvalizer.js"
+    }
+  ]
 }

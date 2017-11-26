@@ -2377,6 +2377,7 @@
                   "column": 5
                 }
               },
+              "static": false,
               "computed": false,
               "key": {
                 "type": "Identifier",
@@ -2395,7 +2396,6 @@
                 },
                 "name": "constructor"
               },
-              "static": false,
               "kind": "constructor",
               "id": null,
               "generator": false,
@@ -3290,6 +3290,7 @@
                   "column": 5
                 }
               },
+              "static": false,
               "computed": false,
               "key": {
                 "type": "Identifier",
@@ -3309,7 +3310,6 @@
                 "name": "_flattenParams",
                 "leadingComments": null
               },
-              "static": false,
               "kind": "method",
               "id": null,
               "generator": false,
@@ -5064,6 +5064,7 @@
                   "column": 5
                 }
               },
+              "static": false,
               "computed": false,
               "key": {
                 "type": "Identifier",
@@ -5083,7 +5084,6 @@
                 "name": "_createConstructor",
                 "leadingComments": null
               },
-              "static": false,
               "kind": "method",
               "id": null,
               "generator": false,
@@ -6725,6 +6725,7 @@
                   "column": 5
                 }
               },
+              "static": false,
               "computed": false,
               "key": {
                 "type": "Identifier",
@@ -6744,7 +6745,6 @@
                 "name": "create",
                 "leadingComments": null
               },
-              "static": false,
               "kind": "method",
               "id": null,
               "generator": false,
@@ -7702,6 +7702,7 @@
                   "column": 5
                 }
               },
+              "static": false,
               "computed": false,
               "key": {
                 "type": "Identifier",
@@ -7720,7 +7721,6 @@
                 },
                 "name": "constructor"
               },
-              "static": false,
               "kind": "constructor",
               "id": null,
               "generator": false,
@@ -8364,6 +8364,7 @@
                   "column": 5
                 }
               },
+              "static": false,
               "computed": false,
               "key": {
                 "type": "Identifier",
@@ -8382,7 +8383,6 @@
                 },
                 "name": "create"
               },
-              "static": false,
               "kind": "method",
               "id": null,
               "generator": false,
@@ -9654,7 +9654,7 @@
         "label": "import",
         "keyword": "import",
         "beforeExpr": false,
-        "startsExpr": false,
+        "startsExpr": true,
         "rightAssociative": false,
         "isLoop": false,
         "isAssign": false,
@@ -10201,7 +10201,7 @@
         "label": "import",
         "keyword": "import",
         "beforeExpr": false,
-        "startsExpr": false,
+        "startsExpr": true,
         "rightAssociative": false,
         "isLoop": false,
         "isAssign": false,

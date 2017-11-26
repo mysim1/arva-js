@@ -1,7 +1,7 @@
 {
   "name": "arva-js",
   "version": "1.2.1",
-  "description": "Using the latest ES6 standards creating a simple, compact MVC for Famous applications.",
+  "description": "Arva Foundation is the core of the Arva User Experience Platform where developers have complete freedom to hack their creations. Built to be a complete substitute for frameworks like React and Angular, Arva plays well with others by emphasising on ECMAScript syntax and aiming for compatability with the W3C Components specification.",
   "main": "src/main.js",
   "homepage": "http://arva.io",
   "repository": {
@@ -9,10 +9,11 @@
     "url": "git://github.com/Arva/arva-js.git"
   },
   "scripts": {
-    "test": "mocha --compilers js:babel/register --recursive --timeout 15000"
+    "test": "mocha --compilers js:babel/register --recursive --timeout 15000",
+    "esdoc": "node_modules/.bin/esdoc"
   },
   "bugs": {
-    "url": "https://github.com/bizboard/arva-js/issues"
+    "url": "https://github.com/Arva/arva-js/issues"
   },
   "jspm": {
     "directories": {
@@ -43,12 +44,17 @@
       "traceur-runtime": "github:jmcriffey/bower-traceur-runtime@0.0.90"
     }
   },
-  "author": "Tom Clement <tom@bizboard.nl>, Hans van den Akker <hans@bizboard.nl>",
+
+  "author": "Karl Lundfall <karl@bizboard.nl>, Hans van den Akker <hans@bizboard.nl>",
   "license": "NPOSL-3.0",
   "devDependencies": {
     "babel": "^5.8.23",
     "babel-runtime": "^6.6.1",
     "chai": "^3.4.0",
+    "esdoc": "^1.0.4",
+    "esdoc-ecmascript-proposal-plugin": "^1.0.0",
+    "esdoc-inject-style-plugin": "^1.0.0",
+    "esdoc-standard-plugin": "^1.0.0",
     "eslint": "^3.1.0",
     "isparta": "^3.1.0",
     "jspm": "^0.16.32",
